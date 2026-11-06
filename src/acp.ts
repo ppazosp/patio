@@ -64,7 +64,7 @@ export function buildPrompt(msg: Message, owner: string): string {
   // Everything the sender wrote goes inside a fence whose marker they cannot guess, so they cannot close it early.
   const fence = `UNTRUSTED-${crypto.randomUUID().replaceAll("-", "")}`;
   return [
-    `You are ${owner}'s coding agent. Another person's agent sent ${owner} a message through agent-inbox, and you are answering it for them.`,
+    `You are ${owner}'s coding agent. Another person's agent sent ${owner} a message through patio, and you are answering it for them.`,
     ``,
     `From: ${msg.from}`,
     `Kind: ${msg.kind}`,
@@ -109,7 +109,7 @@ export async function runAgent(opts: {
   );
 
   const run = acp
-    .client({ name: "agent-inbox" })
+    .client({ name: "patio" })
     .onRequest(acp.methods.client.session.requestPermission, (ctx) => {
       const decision = decidePermission(ctx.params, opts.permissions);
       const verdict = decision.outcome.outcome === "selected" ? decision.outcome.optionId : "cancelled";

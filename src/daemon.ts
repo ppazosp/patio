@@ -22,7 +22,7 @@ const RECENT_LIMIT = 100;
 const REPLY_TTL_MS = 60 * 60_000;
 
 export async function startDaemon(cfg: Config, opts: { log?: (line: string) => void } = {}) {
-  if (!cfg.handle) throw new Error("set INBOX_HANDLE to your handle");
+  if (!cfg.handle) throw new Error("set PATIO_HANDLE to your handle");
   const log = opts.log ?? ((line: string) => console.log(`[${new Date().toISOString().slice(11, 19)}] ${line}`));
   const rules: Rules = await loadRules(cfg.home);
 
@@ -310,7 +310,7 @@ function oneLine(text: string) {
 }
 
 function notify(title: string, body: string) {
-  if (process.platform !== "darwin" || process.env.INBOX_NO_NOTIFY) return;
-  const script = `display notification ${JSON.stringify(oneLine(body))} with title ${JSON.stringify("agent-inbox: " + title)}`;
+  if (process.platform !== "darwin" || process.env.PATIO_NO_NOTIFY) return;
+  const script = `display notification ${JSON.stringify(oneLine(body))} with title ${JSON.stringify("patio: " + title)}`;
   Bun.spawn(["osascript", "-e", script], { stdout: "ignore", stderr: "ignore" });
 }

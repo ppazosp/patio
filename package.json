@@ -1,5 +1,5 @@
 {
-  "name": "agent-inbox",
+  "name": "patio",
   "type": "module",
   "private": true,
   "devDependencies": {
@@ -14,12 +14,12 @@
     "zod": "^4.6.7"
   },
   "bin": {
-    "inbox": "src/cli.ts"
+    "patio": "src/cli.ts"
   },
   "scripts": {
     "relay": "bun src/cli.ts relay",
     "test": "bun test",
     "typecheck": "tsc --noEmit -p .",
-    "build": "bun build --compile src/cli.ts --outfile dist/inbox"
+    "build": "bun build --compile src/cli.ts --outfile dist/patio"
   }
 }

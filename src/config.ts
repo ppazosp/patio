@@ -15,12 +15,12 @@ export function expandHome(path: string): string {
 
 // Everything comes from the environment so two people can run side by side on one machine.
 export function loadConfig(env = process.env): Config {
-  const home = expandHome(env.INBOX_HOME ?? "~/.agent-inbox");
+  const home = expandHome(env.PATIO_HOME ?? "~/.patio");
   return {
     home,
-    handle: env.INBOX_HANDLE ?? "",
-    token: env.INBOX_TOKEN,
-    relay: env.INBOX_RELAY ?? "ws://127.0.0.1:7777",
+    handle: env.PATIO_HANDLE ?? "",
+    token: env.PATIO_TOKEN,
+    relay: env.PATIO_RELAY ?? "ws://127.0.0.1:7777",
     socket: socketPath(home, env),
   };
 }
@@ -32,5 +32,5 @@ export function socketPath(home: string, env = process.env): string {
   if (Buffer.byteLength(inHome) < 100) return inHome;
   const hash = new Bun.CryptoHasher("sha256").update(home).digest("hex").slice(0, 16);
   const runtime = env.XDG_RUNTIME_DIR ?? tmpdir();
-  return join(runtime, `agent-inbox-${process.getuid?.() ?? "user"}`, `${hash}.sock`);
+  return join(runtime, `patio-${process.getuid?.() ?? "user"}`, `${hash}.sock`);
 }

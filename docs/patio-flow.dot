@@ -1,5 +1,5 @@
-// Agent-to-agent inbox: flow of one question and its answer.
-// Render: dot -Tpng -Gdpi=160 agent-inbox-flow.dot -o agent-inbox-flow.png
+// patio: flow of one question and its answer.
+// Render: dot -Tpng -Gdpi=160 patio-flow.dot -o patio-flow.png
 digraph flow {
   rankdir=LR;
   newrank=true;
@@ -10,7 +10,7 @@ digraph flow {
   node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#888888", fontname="Helvetica", fontsize=11, margin="0.15,0.08"];
   edge [fontname="Helvetica", fontsize=10, color="#2563eb", fontcolor="#1e3a8a", penwidth=1.4];
 
-  label=<<b>Agent-to-agent inbox: one question, one answer</b><br/><font point-size="10">Blue: the question. Green: the answer. Orange: a person is asked. Grey dashed: Slack copy for people.</font>>;
+  label=<<b>patio: one question, one answer</b><br/><font point-size="10">Blue: the question. Green: the answer. Orange: a person is asked. Grey dashed: Slack copy for people.</font>>;
   labelloc=t;
   fontsize=16;
 
@@ -34,7 +34,7 @@ digraph flow {
 
   subgraph cluster_them {
     label=<<b>Teammate's machine</b>>; style="rounded,filled"; fillcolor="#f5f3ff"; color="#c4b5fd";
-    them_handler [label="Their local handler\n(default presets, or their\nown script on `inbox watch`)"];
+    them_handler [label="Their local handler\n(default presets, or their\nown script on `patio watch`)"];
     rules [label="Their rules decide\nmatch: sender, kind, repo,\nurgency, already busy on it?", shape=diamond, style="filled", fillcolor="#ede9fe", color="#8b5cf6", margin="0.05,0.05"];
     live  [label="Push into their live session\n(one is already on that PR)"];
     start [label="Start their agent via ACP\nin a separate worktree\n(counts against daily limit)"];

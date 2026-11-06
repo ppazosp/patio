@@ -1,4 +1,4 @@
-# agent-inbox
+# patio
 
 Live messages between people's coding agents. Your agent asks a teammate's agent a question,
 the teammate's machine decides what to do with it under the teammate's own rules (often: start
@@ -7,16 +7,16 @@ their coding agent read-only and let it answer), and the answer comes back into 
 This is a proof of concept. It is live-only: you can only message people who are online, and the
 relay stores nothing.
 
-![Flow of one question and its answer](docs/agent-inbox-flow.png)
+![Flow of one question and its answer](docs/patio-flow.png)
 
 ## How it fits together
 
 | Part | What it does |
 |---|---|
-| `inbox relay` | WebSocket server. Knows who is online, passes messages along, stamps the sender, stores nothing. |
-| `inbox up` | The daemon on each person's machine. Stays connected, applies that person's `rules.yaml`, serves a local Unix socket. |
-| `inbox ask/wait/reply/who/list/watch` | CLI commands that talk to your daemon. |
-| `inbox mcp` | The same commands as MCP tools, for any agent that speaks MCP. |
+| `patio relay` | WebSocket server. Knows who is online, passes messages along, stamps the sender, stores nothing. |
+| `patio up` | The daemon on each person's machine. Stays connected, applies that person's `rules.yaml`, serves a local Unix socket. |
+| `patio ask/wait/reply/who/list/watch` | CLI commands that talk to your daemon. |
+| `patio mcp` | The same commands as MCP tools, for any agent that speaks MCP. |
 | ACP | How the daemon starts the receiver's coding agent (Claude Code, Codex, Gemini CLI…) to answer. |
 
 ## Try it on one machine
@@ -34,29 +34,29 @@ bun src/cli.ts relay
 Terminal 2, Miguel goes online:
 
 ```bash
-INBOX_HOME=/tmp/miguel INBOX_HANDLE=miguel bun src/cli.ts up
+PATIO_HOME=/tmp/miguel PATIO_HANDLE=miguel bun src/cli.ts up
 ```
 
 Terminal 3, Pablo goes online:
 
 ```bash
-INBOX_HOME=/tmp/pablo INBOX_HANDLE=pablo bun src/cli.ts up
+PATIO_HOME=/tmp/pablo PATIO_HANDLE=pablo bun src/cli.ts up
 ```
 
 Terminal 4, Pablo asks and waits:
 
 ```bash
-INBOX_HOME=/tmp/pablo bun src/cli.ts ask miguel "Is PR 812 going to merge today?" --pr 812 --wait
+PATIO_HOME=/tmp/pablo bun src/cli.ts ask miguel "Is PR 812 going to merge today?" --pr 812 --wait
 ```
 
 With no rules, Miguel's daemon just notifies him. He answers with
-`INBOX_HOME=/tmp/miguel bun src/cli.ts reply <convo> "CI is green, merging after lunch"`.
+`PATIO_HOME=/tmp/miguel bun src/cli.ts reply <convo> "CI is green, merging after lunch"`.
 
-To build a single binary: `bun run build` writes `dist/inbox`.
+To build a single binary: `bun run build` writes `dist/patio`.
 
 ## Rules: what happens when a message reaches you
 
-`$INBOX_HOME/rules.yaml`. The first matching rule wins; otherwise `default` applies. The sender never
+`$PATIO_HOME/rules.yaml`. The first matching rule wins; otherwise `default` applies. The sender never
 decides this.
 
 ```yaml
@@ -70,7 +70,7 @@ rules:
     permissions: read-only # read-only | none
 
   - match: { kind: request }
-    do: notify             # macOS notification; answer with `inbox reply`
+    do: notify             # macOS notification; answer with `patio reply`
 
   - match: { kind: report }
     do: run                # your own handler: gets the message as JSON on stdin,
@@ -87,7 +87,7 @@ Message kinds: `question`, `report`, `heads-up`, `request` (and `reply`).
 Every agent can run shell commands, so waiting is one command:
 
 ```bash
-inbox wait <convo> --timeout 600   # prints the reply and exits 0; exit 2 on timeout
+patio wait <convo> --timeout 600   # prints the reply and exits 0; exit 2 on timeout
 ```
 
 - **Claude Code** runs it as a background command, goes idle, and is woken when it exits.
@@ -102,15 +102,15 @@ Exit codes: `0` ok, `1` error, `2` timed out, `3` recipient offline.
 Claude Code:
 
 ```bash
-claude mcp add agent-inbox -e INBOX_HOME=$HOME/.agent-inbox -- bun /path/to/agent-inbox/src/cli.ts mcp
+claude mcp add patio -e PATIO_HOME=$HOME/.patio -- bun /path/to/patio/src/cli.ts mcp
 ```
 
 Codex (`~/.codex/config.toml`):
 
 ```toml
-[mcp_servers.agent-inbox]
+[mcp_servers.patio]
 command = "bun"
-args = ["/path/to/agent-inbox/src/cli.ts", "mcp"]
+args = ["/path/to/patio/src/cli.ts", "mcp"]
 ```
 
 Tools: `who`, `ask`, `wait_for_reply`, `inbox`, `reply`.
@@ -119,12 +119,12 @@ Tools: `who`, `ask`, `wait_for_reply`, `inbox`, `reply`.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `INBOX_HANDLE` | none | Your handle (lowercase letters, digits, `-`, `_`) |
-| `INBOX_HOME` | `~/.agent-inbox` | Where your rules and socket live |
-| `INBOX_RELAY` | `ws://127.0.0.1:7777` | Relay address |
-| `INBOX_TOKEN` | none | Your token, when the relay requires one |
-| `INBOX_USERS` | none | On the relay: `pablo=tok1,miguel=tok2`. Without it any handle is accepted (development only). |
-| `INBOX_NO_NOTIFY` | unset | Set to skip macOS notifications |
+| `PATIO_HANDLE` | none | Your handle (lowercase letters, digits, `-`, `_`) |
+| `PATIO_HOME` | `~/.patio` | Where your rules and socket live |
+| `PATIO_RELAY` | `ws://127.0.0.1:7777` | Relay address |
+| `PATIO_TOKEN` | none | Your token, when the relay requires one |
+| `PATIO_USERS` | none | On the relay: `pablo=tok1,miguel=tok2`. Without it any handle is accepted (development only). |
+| `PATIO_NO_NOTIFY` | unset | Set to skip macOS notifications |
 
 ## Safety model
 
@@ -159,7 +159,7 @@ of them, and answered the read-only part from the code.
 - No end-to-end encryption yet: the relay can read messages in transit. Run it yourself, behind TLS.
 - Tokens are shared secrets set on the relay, compared in constant time; an unknown handle is
   rejected. No sign-in, no device keys.
-- The local socket lives in your `INBOX_HOME`, or in a per-user runtime folder when that path is too
+- The local socket lives in your `PATIO_HOME`, or in a per-user runtime folder when that path is too
   long. The daemon refuses to start if that folder is a symlink, belongs to someone else, or is open
   to other users.
 - Started agents run in `cwd`, not in a separate worktree. Fine for read-only, required before

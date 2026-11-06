@@ -16,7 +16,7 @@ async function call<T>(cfg: Config, path: string, init?: RequestInit): Promise<T
   try {
     res = await fetch(`http://daemon${path}`, { ...init, unix: cfg.socket } as RequestInit);
   } catch {
-    throw new DaemonError(`no daemon at ${cfg.socket}; start it with \`inbox up\``, "no_daemon");
+    throw new DaemonError(`no daemon at ${cfg.socket}; start it with \`patio up\``, "no_daemon");
   }
   const body = (await res.json()) as T & { error?: string; code?: string };
   if (!res.ok) throw new DaemonError(body.error ?? `daemon returned ${res.status}`, body.code ?? "error");

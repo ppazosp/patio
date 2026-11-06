@@ -54,7 +54,7 @@ export function startRelay(opts: RelayOptions = {}) {
     fetch(req, srv) {
       if (new URL(req.url).pathname === "/health") return new Response("ok");
       if (srv.upgrade(req, { data: {} })) return;
-      return new Response("agent-inbox relay: connect with a WebSocket", { status: 426 });
+      return new Response("patio relay: connect with a WebSocket", { status: 426 });
     },
     websocket: {
       idleTimeout: 120,
@@ -130,7 +130,7 @@ export function startRelay(opts: RelayOptions = {}) {
     },
   });
 
-  if (!opts.users) log("no INBOX_USERS set: accepting any handle without a token (development only)");
+  if (!opts.users) log("no PATIO_USERS set: accepting any handle without a token (development only)");
   log(`listening on ws://${server.hostname}:${server.port}`);
   return server;
 }

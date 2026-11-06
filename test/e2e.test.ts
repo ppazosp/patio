@@ -17,7 +17,7 @@ let relay: ReturnType<typeof startRelay>;
 let stops: Array<() => Promise<void>> = [];
 
 async function person(handle: string, rulesYaml?: string, token?: string): Promise<Config> {
-  const home = await mkdtemp(join(tmpdir(), `inbox-${handle}-`));
+  const home = await mkdtemp(join(tmpdir(), `patio-${handle}-`));
   if (rulesYaml) await writeFile(join(home, "rules.yaml"), rulesYaml);
   const cfg: Config = { home, handle, token, relay: `ws://127.0.0.1:${relay.port}`, socket: join(home, "daemon.sock") };
   const d = await startDaemon(cfg, { log: quiet });
@@ -27,7 +27,7 @@ async function person(handle: string, rulesYaml?: string, token?: string): Promi
 }
 
 beforeAll(() => {
-  process.env.INBOX_NO_NOTIFY = "1";
+  process.env.PATIO_NO_NOTIFY = "1";
   relay = startRelay({ port: 0, users: new Map([["pablo", "p-token"], ["miguel", "m-token"], ["ana", "a-token"]]), log: quiet });
 });
 
@@ -102,7 +102,7 @@ test("a second daemon on the same home refuses to start", async () => {
 });
 
 test("the relay rejects a wrong token", async () => {
-  const home = await mkdtemp(join(tmpdir(), "inbox-spoof-"));
+  const home = await mkdtemp(join(tmpdir(), "patio-spoof-"));
   const cfg: Config = { home, handle: "miguel", token: "wrong", relay: `ws://127.0.0.1:${relay.port}`, socket: join(home, "daemon.sock") };
   const d = await startDaemon(cfg, { log: quiet });
   stops.push(d.stop);
@@ -146,7 +146,7 @@ test("an unknown handle without a token is not accepted", () => {
 });
 
 test("an unknown handle cannot join a relay that requires tokens", async () => {
-  const home = await mkdtemp(join(tmpdir(), "inbox-stranger-"));
+  const home = await mkdtemp(join(tmpdir(), "patio-stranger-"));
   const cfg: Config = { home, handle: "stranger", relay: `ws://127.0.0.1:${relay.port}`, socket: join(home, "daemon.sock") };
   const d = await startDaemon(cfg, { log: quiet });
   stops.push(d.stop);
@@ -177,12 +177,12 @@ test("everything the sender wrote is inside an unguessable fence", () => {
 });
 
 test("the socket directory must belong to this user and be private", async () => {
-  const long = join(await mkdtemp(join(tmpdir(), "inbox-long-")), "x".repeat(90));
-  expect(socketPath(long, {})).toStartWith(join(tmpdir(), `agent-inbox-${process.getuid!()}`));
-  const runtime = await mkdtemp(join(tmpdir(), "inbox-rt-"));
+  const long = join(await mkdtemp(join(tmpdir(), "patio-long-")), "x".repeat(90));
+  expect(socketPath(long, {})).toStartWith(join(tmpdir(), `patio-${process.getuid!()}`));
+  const runtime = await mkdtemp(join(tmpdir(), "patio-rt-"));
   const sock = socketPath(long, { XDG_RUNTIME_DIR: runtime });
-  await mkdir(join(runtime, `agent-inbox-${process.getuid!()}`), { mode: 0o755 });
-  await chmod(join(runtime, `agent-inbox-${process.getuid!()}`), 0o755);
+  await mkdir(join(runtime, `patio-${process.getuid!()}`), { mode: 0o755 });
+  await chmod(join(runtime, `patio-${process.getuid!()}`), 0o755);
   const cfg: Config = { home: long, handle: "pablo", token: "p-token", relay: `ws://127.0.0.1:${relay.port}`, socket: sock };
   expect(startDaemon(cfg, { log: quiet })).rejects.toThrow("other users");
 });
