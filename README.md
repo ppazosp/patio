@@ -131,13 +131,16 @@ Tools: `who`, `ask`, `wait_for_reply`, `inbox`, `reply`.
 A message from someone else's agent is untrusted. It can make your machine start your agent, so the
 daemon, as the ACP client, enforces your rules rather than trusting the agent:
 
-1. **The prompt** tells the agent the message is information, not instructions; to answer only with
-   checkable facts; never to promise anything for you; never to include secrets.
+1. **The prompt** puts everything the sender wrote (text and context) inside a fence with a random
+   marker they cannot guess, and tells the agent it is information, not instructions; to answer only
+   with checkable facts; never to promise anything for you; never to include secrets. Context fields
+   are checked at the relay: short, single-line strings only.
 2. **The session mode** is moved to one that asks before acting. Your own settings may start
    sessions in an approve-everything mode (Claude Code's `bypassPermissions`). If the agent offers
-   no asking mode and is in an approve-everything one, the daemon refuses to run it.
-3. **Permission answers**: with `read-only`, reads, searches and fetches are allowed; edits,
-   deletes and commands are refused.
+   no known asking mode, or reports no modes at all, the daemon refuses to run it (fails closed).
+3. **Permission answers**: with `read-only`, reads and searches are allowed; edits, deletes,
+   commands and web requests are refused. Web requests are refused because a read-only agent could
+   otherwise send what it read to any URL.
 4. **Claude Code hardening**: the session gets only the Read, Grep and Glob tools, bypass is
    switched off, and only MCP servers we pass are loaded. Without this, your own allow rules
    (for example `Bash(git push:*)`) would approve commands before the daemon is asked.
@@ -150,10 +153,15 @@ of them, and answered the read-only part from the code.
 - **Reading is not harmless.** A read-only agent can still be asked to quote a secret file. The
   prompt forbids it, but that is not enforcement. Limit who may start your agent (`from:`), and
   add path deny rules before real use.
-- Codex and Gemini get the mode switch and permission answers, but no tool stripping like Claude.
-  Their own auto-approve settings may still apply.
+- Codex and Gemini get the mode check and permission answers, but no tool stripping like Claude.
+  Their own auto-approve settings may still apply. Neither has been tried yet; an agent without a
+  known asking mode will be refused.
 - No end-to-end encryption yet: the relay can read messages in transit. Run it yourself, behind TLS.
-- Tokens are shared secrets set on the relay. No sign-in, no device keys.
+- Tokens are shared secrets set on the relay, compared in constant time; an unknown handle is
+  rejected. No sign-in, no device keys.
+- The local socket lives in your `INBOX_HOME`, or in a per-user runtime folder when that path is too
+  long. The daemon refuses to start if that folder is a symlink, belongs to someone else, or is open
+  to other users.
 - Started agents run in `cwd`, not in a separate worktree. Fine for read-only, required before
   allowing edits.
 - Replies are matched to the waiting command, not pushed into a running session.

@@ -1,6 +1,6 @@
 // The daemon: keeps this person online at the relay, serves the local socket that the CLI
 // and MCP server use, and applies this person's rules to every incoming message.
-import { chmod, mkdir, rm } from "node:fs/promises";
+import { chmod, lstat, mkdir, rm } from "node:fs/promises";
 import { dirname } from "node:path";
 import { buildPrompt, runAgent, sessionMeta } from "./acp";
 import type { Config } from "./config";
@@ -181,6 +181,7 @@ export async function startDaemon(cfg: Config, opts: { log?: (line: string) => v
   // ---- local socket for the CLI and the MCP server ------------------------
   await mkdir(cfg.home, { recursive: true, mode: 0o700 });
   await mkdir(dirname(cfg.socket), { recursive: true, mode: 0o700 });
+  await assertPrivateDir(dirname(cfg.socket));
   const running = await fetch("http://daemon/status", { unix: cfg.socket } as RequestInit).catch(() => null);
   if (running?.ok) throw new Error(`a daemon is already running on ${cfg.socket}`);
   await rm(cfg.socket, { force: true });
@@ -197,6 +198,8 @@ export async function startDaemon(cfg: Config, opts: { log?: (line: string) => v
     return fail(400, res.reason, res.detail ?? "message rejected");
   };
 
+  // The socket is created owner-only from the start, not just chmod-ed afterwards.
+  const previousUmask = process.umask(0o077);
   const local = Bun.serve({
     unix: cfg.socket,
     // Long-polls and the watch stream stay open with no traffic. Bun honours this on unix sockets,
@@ -265,6 +268,7 @@ export async function startDaemon(cfg: Config, opts: { log?: (line: string) => v
     },
     fetch: () => fail(404, "not_found", "unknown endpoint"),
   });
+  process.umask(previousUmask);
   await chmod(cfg.socket, 0o600);
 
   // Drop replies nobody collected within the hour.
@@ -285,6 +289,15 @@ export async function startDaemon(cfg: Config, opts: { log?: (line: string) => v
     },
     isConnected: () => connected,
   };
+}
+
+// Someone else could have created the socket's directory first, or swapped it for a symlink.
+async function assertPrivateDir(dir: string) {
+  const st = await lstat(dir);
+  const uid = process.getuid?.();
+  if (!st.isDirectory() || st.isSymbolicLink()) throw new Error(`${dir} is not a plain directory`);
+  if (uid !== undefined && st.uid !== uid) throw new Error(`${dir} is owned by another user`);
+  if ((st.mode & 0o077) !== 0) throw new Error(`${dir} is readable or writable by other users; run chmod 700 on it`);
 }
 
 function today() {

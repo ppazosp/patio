@@ -1,4 +1,4 @@
-import { homedir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 export type Config = {
@@ -21,14 +21,16 @@ export function loadConfig(env = process.env): Config {
     handle: env.INBOX_HANDLE ?? "",
     token: env.INBOX_TOKEN,
     relay: env.INBOX_RELAY ?? "ws://127.0.0.1:7777",
-    socket: socketPath(home),
+    socket: socketPath(home, env),
   };
 }
 
-// Unix socket paths are capped at about 104 bytes on macOS, so a long home falls back to a short per-user directory.
-export function socketPath(home: string): string {
+// Unix socket paths are capped at about 104 bytes on macOS, so a long home falls back to a per-user
+// runtime directory (macOS's tmpdir is already per user). The daemon checks who owns that directory.
+export function socketPath(home: string, env = process.env): string {
   const inHome = join(home, "daemon.sock");
   if (Buffer.byteLength(inHome) < 100) return inHome;
   const hash = new Bun.CryptoHasher("sha256").update(home).digest("hex").slice(0, 16);
-  return join("/tmp", `agent-inbox-${process.getuid?.() ?? "user"}`, `${hash}.sock`);
+  const runtime = env.XDG_RUNTIME_DIR ?? tmpdir();
+  return join(runtime, `agent-inbox-${process.getuid?.() ?? "user"}`, `${hash}.sock`);
 }

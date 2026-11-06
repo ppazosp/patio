@@ -56,5 +56,24 @@ export function validateOutgoing(msg: unknown): string | null {
   if (!KINDS.includes(m.kind as Kind)) return `kind must be one of ${KINDS.join(", ")}`;
   if (typeof m.text !== "string" || !m.text.trim()) return "text is required";
   if (m.text.length > 32_000) return "text is over 32000 characters";
+  return validateContext(m.context);
+}
+
+// Context ends up in the receiving agent's prompt, so keep it to short single-line strings.
+const CONTEXT_FIELD_RE = /^[^\r\n]{1,200}$/;
+
+function validateContext(ctx: unknown): string | null {
+  if (ctx === undefined || ctx === null) return null;
+  if (typeof ctx !== "object" || Array.isArray(ctx)) return "context must be an object";
+  const c = ctx as Record<string, unknown>;
+  for (const key of Object.keys(c)) if (!["repo", "pr", "files"].includes(key)) return `unknown context field ${key}`;
+  for (const key of ["repo", "pr"] as const)
+    if (c[key] !== undefined && (typeof c[key] !== "string" || !CONTEXT_FIELD_RE.test(c[key] as string)))
+      return `context.${key} must be a single line under 200 characters`;
+  if (c.files !== undefined) {
+    if (!Array.isArray(c.files) || c.files.length > 50) return "context.files must be a list of at most 50 paths";
+    if (c.files.some((f) => typeof f !== "string" || !CONTEXT_FIELD_RE.test(f)))
+      return "each context.files entry must be a single line under 200 characters";
+  }
   return null;
 }

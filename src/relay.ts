@@ -1,5 +1,6 @@
 // The relay: tracks who is online and passes messages between them. It stores nothing.
 import type { ServerWebSocket } from "bun";
+import { timingSafeEqual } from "node:crypto";
 import {
   HANDLE_RE,
   PROTOCOL_VERSION,
@@ -28,6 +29,14 @@ export function parseUsers(spec: string | undefined): Map<string, string> | unde
     users.set(handle.trim(), token.trim());
   }
   return users;
+}
+
+// An unknown handle never matches, even when the hello carries no token.
+export function tokenMatches(expected: string | undefined, given: unknown): boolean {
+  if (expected === undefined || typeof given !== "string") return false;
+  const a = Buffer.from(expected);
+  const b = Buffer.from(given);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 export function startRelay(opts: RelayOptions = {}) {
@@ -68,7 +77,7 @@ export function startRelay(opts: RelayOptions = {}) {
             send(ws, { type: "error", message: "invalid handle" });
             return ws.close(4001, "handle");
           }
-          if (opts.users && opts.users.get(frame.handle) !== frame.token) {
+          if (opts.users && !tokenMatches(opts.users.get(frame.handle), frame.token)) {
             send(ws, { type: "error", message: "unknown handle or wrong token" });
             return ws.close(4003, "auth");
           }
