@@ -113,7 +113,7 @@ command = "bun"
 args = ["/path/to/patio/src/cli.ts", "mcp"]
 ```
 
-Tools: `who`, `ask`, `wait_for_reply`, `inbox`, `reply`.
+Tools: `who`, `ask`, `wait_for_reply`, `received`, `reply`.
 
 ## Configuration
 

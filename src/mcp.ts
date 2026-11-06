@@ -76,7 +76,7 @@ export async function startMcp(cfg: Config) {
   );
 
   server.registerTool(
-    "inbox",
+    "received",
     { description: "List recent messages other people's agents sent to you." },
     () => guard(async () => text((await daemon.list(cfg)).messages.map(show).join("\n") || "No messages.")),
   );
