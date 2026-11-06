@@ -44,7 +44,13 @@ export async function loadRules(home: string): Promise<Rules> {
     rules: raw.rules ?? [],
     limits: { ...DEFAULT_RULES.limits, ...raw.limits },
   };
-  if (!ACTIONS.includes(rules.default)) throw new Error(`rules.yaml: default must be one of ${ACTIONS.join(", ")}`);
+  // Catch settings written at the top level, where they would be silently ignored.
+  for (const key of Object.keys(raw))
+    if (!["default", "rules", "limits"].includes(key))
+      throw new Error(`rules.yaml: unknown top-level key "${key}"; agent, command, cwd and permissions go inside a rule`);
+  // agent and run need settings that only a rule can carry.
+  if (rules.default !== "notify" && rules.default !== "refuse")
+    throw new Error(`rules.yaml: default must be notify or refuse; for agent or run, add a rule (match: {} matches everything)`);
   rules.rules.forEach((rule, i) => {
     const where = `rules.yaml: rule ${i + 1}`;
     if (!ACTIONS.includes(rule.do)) throw new Error(`${where}: do must be one of ${ACTIONS.join(", ")}`);

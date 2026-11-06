@@ -11,6 +11,7 @@ import type { Config } from "../src/config";
 import { startDaemon } from "../src/daemon";
 import { daemon, DaemonError, waitForReply } from "../src/local";
 import { startRelay } from "../src/relay";
+import { loadRules } from "../src/rules";
 
 const quiet = () => {};
 let relay: ReturnType<typeof startRelay>;
@@ -185,4 +186,16 @@ test("the socket directory must belong to this user and be private", async () =>
   await chmod(join(runtime, `patio-${process.getuid!()}`), 0o755);
   const cfg: Config = { home: long, handle: "pablo", token: "p-token", relay: `ws://127.0.0.1:${relay.port}`, socket: sock };
   expect(startDaemon(cfg, { log: quiet })).rejects.toThrow("other users");
+});
+
+test("rules.yaml rejects settings that would be silently ignored", async () => {
+  const rulesFrom = async (yaml: string) => {
+    const home = await mkdtemp(join(tmpdir(), "patio-rules-"));
+    await writeFile(join(home, "rules.yaml"), yaml);
+    return loadRules(home);
+  };
+  expect(rulesFrom("default: agent\n")).rejects.toThrow("default must be notify or refuse");
+  expect(rulesFrom("default: notify\nagent: claude\ncwd: ~/code\n")).rejects.toThrow('unknown top-level key "agent"');
+  const ok = await rulesFrom("default: refuse\nrules:\n  - match: {}\n    do: agent\n    agent: claude\n    cwd: ~/code\n");
+  expect(ok.rules[0]!.do).toBe("agent");
 });

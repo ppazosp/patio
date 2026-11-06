@@ -60,7 +60,7 @@ To build a single binary: `bun run build` writes `dist/patio`.
 decides this.
 
 ```yaml
-default: notify            # notify | run | agent | refuse
+default: notify            # notify | refuse (agent and run need a rule)
 
 rules:
   - match: { kind: question, from: [pablo, ana] }
