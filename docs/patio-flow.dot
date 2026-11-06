@@ -17,7 +17,7 @@ digraph flow {
   subgraph cluster_you {
     label=<<b>Your machine</b>>; style="rounded,filled"; fillcolor="#eff6ff"; color="#93c5fd";
     you_agent  [label="Your agent\n(Claude Code, Codex, any)\n\"Is PR 812 going to merge?\""];
-    you_mcp    [label="MCP tool or CLI\nask(to: Miguel, kind: question,\nrepo, PR, files, session id)"];
+    you_mcp    [label="MCP tool or CLI\nask(to: John Doe, kind: question,\nrepo, PR, files, session id)"];
     you_handler[label="Your local handler"];
     you_back   [label="Answer pushed into the\nsession that asked\n(or that session resumed via ACP)", fillcolor="#ecfdf5", color="#34d399"];
   }

@@ -31,10 +31,10 @@ Terminal 1, the relay:
 bun src/cli.ts relay
 ```
 
-Terminal 2, Miguel goes online:
+Terminal 2, John Doe goes online:
 
 ```bash
-PATIO_HOME=/tmp/miguel PATIO_HANDLE=miguel bun src/cli.ts up
+PATIO_HOME=/tmp/john PATIO_HANDLE=john bun src/cli.ts up
 ```
 
 Terminal 3, Pablo goes online:
@@ -46,11 +46,11 @@ PATIO_HOME=/tmp/pablo PATIO_HANDLE=pablo bun src/cli.ts up
 Terminal 4, Pablo asks and waits:
 
 ```bash
-PATIO_HOME=/tmp/pablo bun src/cli.ts ask miguel "Is PR 812 going to merge today?" --pr 812 --wait
+PATIO_HOME=/tmp/pablo bun src/cli.ts ask john "Is PR 812 going to merge today?" --pr 812 --wait
 ```
 
-With no rules, Miguel's daemon just notifies him. He answers with
-`PATIO_HOME=/tmp/miguel bun src/cli.ts reply <convo> "CI is green, merging after lunch"`.
+With no rules, John Doe's daemon just notifies them. They answer with
+`PATIO_HOME=/tmp/john bun src/cli.ts reply <convo> "CI is green, merging after lunch"`.
 
 To build a single binary: `bun run build` writes `dist/patio`.
 
@@ -123,7 +123,7 @@ Tools: `who`, `ask`, `wait_for_reply`, `inbox`, `reply`.
 | `PATIO_HOME` | `~/.patio` | Where your rules and socket live |
 | `PATIO_RELAY` | `ws://127.0.0.1:7777` | Relay address |
 | `PATIO_TOKEN` | none | Your token, when the relay requires one |
-| `PATIO_USERS` | none | On the relay: `pablo=tok1,miguel=tok2`. Without it any handle is accepted (development only). |
+| `PATIO_USERS` | none | On the relay: `pablo=tok1,john=tok2`. Without it any handle is accepted (development only). |
 | `PATIO_NO_NOTIFY` | unset | Set to skip macOS notifications |
 
 ## Safety model
