@@ -173,3 +173,7 @@ of them, and answered the read-only part from the code.
 bun test          # relay + two daemons end to end, rules, permission and mode decisions
 bun run typecheck
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).

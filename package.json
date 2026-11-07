@@ -2,6 +2,7 @@
   "name": "patio",
   "type": "module",
   "private": true,
+  "license": "MIT",
   "devDependencies": {
     "@types/bun": "latest"
   },
